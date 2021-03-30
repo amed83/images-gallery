@@ -1,4 +1,4 @@
-import { useState, FC, useEffect, useCallback } from "react";
+import { useState, FC, useEffect, useCallback, useReducer } from "react";
 
 import { Image } from "../Image/Image";
 import { ApplyQueries, useGridStyles } from "./Style";
@@ -8,15 +8,24 @@ import { ModalWrapper } from "../ModalWrapper/ModalWrapper";
 export interface ImageProps {
   download_url: string;
   id: string;
-  isLoading?: boolean;
+}
+
+interface DashboardProps {
+  data: ImageProps[];
+  totalImages: number;
 }
 
 export const Dashboard: FC<{}> = () => {
-  const [images, setImages] = useState<ImageProps[]>([]);
+  const [images, setImages] = useState<DashboardProps>({
+    data: [],
+    totalImages: 8,
+  });
   const [fullWidthImg, setFullWidthImg] = useState<string | undefined>(
     undefined
   );
   const [pageIndex, setPageIndex] = useState<number>(1);
+
+  const imagesForPage = 4;
 
   const gridClasses = useGridStyles();
 
@@ -25,17 +34,22 @@ export const Dashboard: FC<{}> = () => {
   };
 
   useEffect(() => {
-    fetch(`https://picsum.photos/v2/list?page=${pageIndex}&limit=4`)
+    fetch(
+      `https://picsum.photos/v2/list?page=${pageIndex}&limit=${imagesForPage}`
+    )
       .then((response) => response.json())
       .then((response) => {
-        const copyOfLastImg = {
-          ...response[response.length - 1],
-          id: response[response.length - 1] + "B",
-        };
-        response.push(copyOfLastImg);
-        return setImages(
-          response.map((img: ImageProps) => ({ ...img, isLoading: true }))
-        );
+        if (images.totalImages - imagesForPage > 0) {
+          const copyOfLastImg = {
+            ...response[response.length - 1],
+            id: response[response.length - 1].id + "B",
+          };
+          response.push(copyOfLastImg);
+        }
+        setImages({
+          data: response,
+          totalImages: images.totalImages - imagesForPage,
+        });
       });
   }, [pageIndex]);
 
@@ -45,28 +59,12 @@ export const Dashboard: FC<{}> = () => {
 
   const handleOpenModal = useCallback(
     (id: string) => {
-      setFullWidthImg(images.filter((img) => img.id === id)[0].download_url);
-    },
-    [images]
-  );
-
-  const handleLoading = useCallback(
-    (id: string) => {
-      setImages(
-        images.map((img) => {
-          if (img.id === id) {
-            return {
-              ...img,
-              isLoading: false,
-            };
-          }
-          return img;
-        })
+      setFullWidthImg(
+        images.data.filter((img) => img.id === id)[0].download_url
       );
     },
     [images]
   );
-
   return (
     <>
       <GridList
@@ -74,20 +72,21 @@ export const Dashboard: FC<{}> = () => {
         cols={ApplyQueries()}
         spacing={9}
       >
-        {images.length > 0 &&
-          images.map(({ id, download_url, isLoading }, index) => {
+        {images.data.length > 0 &&
+          images.data.map(({ id, download_url }, index) => {
             return (
               <Image
                 id={id}
                 key={id}
                 handleOpenModal={handleOpenModal}
-                handleLoading={handleLoading}
                 handlePageIndex={
-                  index === images.length - 1 ? handlePageIndex : undefined
+                  index === images.data.length - 1 ? handlePageIndex : undefined
                 }
                 download_url={download_url}
-                isLoading={isLoading}
-                isLoadMore={index === images.length - 1}
+                isLoadMore={
+                  index === images.data.length - 1 && images.totalImages > 0
+                }
+                totalImages={images.totalImages}
               />
             );
           })}

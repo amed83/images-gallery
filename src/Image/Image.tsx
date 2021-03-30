@@ -1,5 +1,5 @@
-import { GridListTile, CircularProgress, Box, Grid } from "@material-ui/core";
-import { FC, memo } from "react";
+import { GridListTile, CircularProgress, Box } from "@material-ui/core";
+import { FC, memo, useState } from "react";
 import { ImageProps } from "../Dashboard/Dashboard";
 import {
   useGridListTileStyles,
@@ -9,17 +9,18 @@ import {
 
 interface PageProps extends ImageProps {
   handleOpenModal: (id: string) => void;
-  handleLoading: (id: string) => void;
   handlePageIndex?: () => void;
   style?: {};
   isLoadMore?: boolean;
+  totalImages: number;
 }
 
-export const Image: FC<PageProps> = memo((props) => {
+export const Image: FC<PageProps> = (props) => {
   const gridItemClasses = useGridListTileStyles();
-  const loadMoreImgClasses = useLoadMoreImage(props)();
-  const loadMoreImgContainerClasses = useLoadMoreImgContainer();
 
+  const loadMoreImgContainerClasses = useLoadMoreImgContainer();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const loadMoreImgClasses = useLoadMoreImage(isLoading)();
   if (props.isLoadMore) {
     return (
       <GridListTile
@@ -32,23 +33,23 @@ export const Image: FC<PageProps> = memo((props) => {
           position="absolute"
           left="50%"
           top="50%"
-          display={props.isLoading ? "none" : "inline"}
+          display={isLoading ? "none" : "inline"}
           textAlign="center"
         >
-          <h3 style={{ color: "white" }}>Load More Pictures </h3>
+          <h3 style={{ color: "white" }}>{props.totalImages}More Pictures </h3>
         </Box>
         <img
           src={props.download_url}
           alt=""
-          onLoad={() => props.handleLoading(props.id)}
+          onLoad={() => setIsLoading(false)}
           style={{
             objectFit: "cover",
             opacity: "0.5",
-            display: props.isLoading ? "none" : "inline",
+            display: isLoading ? "none" : "inline",
           }}
         />
         <CircularProgress
-          style={{ display: props.isLoading ? "block" : "none" }}
+          style={{ display: isLoading ? "block" : "none" }}
         ></CircularProgress>
       </GridListTile>
     );
@@ -61,14 +62,14 @@ export const Image: FC<PageProps> = memo((props) => {
       style={{ cursor: "pointer", ...props.style }}
     >
       <img
-        style={{ display: props.isLoading ? "none" : "inline" }}
+        style={{ display: isLoading ? "none" : "inline" }}
         src={props.download_url}
         alt="img"
-        onLoad={() => props.handleLoading(props.id)}
+        onLoad={() => setIsLoading(false)}
       />
       <CircularProgress
-        style={{ display: props.isLoading ? "block" : "none" }}
+        style={{ display: isLoading ? "block" : "none" }}
       ></CircularProgress>
     </GridListTile>
   );
-});
+};

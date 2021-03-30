@@ -10,7 +10,7 @@ export const useGridListTileStyles = makeStyles({
   },
 });
 
-export const useLoadMoreImage = (props: any) =>
+export const useLoadMoreImage = (isLoading: boolean) =>
   makeStyles({
     root: {
       position: "relative",
@@ -19,7 +19,7 @@ export const useLoadMoreImage = (props: any) =>
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: props.isLoading ? "white" : "black",
+        backgroundColor: isLoading ? "white" : "black",
       },
     },
   });
